@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Placar de Vôlei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+
+        // Detector de modo escuro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+</head>
+
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-primary">Placar de Vôlei</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Controle fácil e intuitivo para suas partidas</p>
+        </header>
+
+        <!-- Configurações -->
+        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-8 shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Configurações</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="pontosParaVencer" class="block mb-2 font-medium">Pontos para vencer um set:</label>
+                    <input type="number" id="pontosParaVencer" value="25" min="1" max="100"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+                <div>
+                    <label for="pontosMinimosDiferenca" class="block mb-2 font-medium">Diferença mínima de
+                        pontos:</label>
+                    <input type="number" id="pontosMinimosDiferenca" value="2" min="1" max="10"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+                <div>
+                    <label for="setsParaVencer" class="block mb-2 font-medium">Sets para vencer o jogo:</label>
+                    <input type="number" id="setsParaVencer" value="3" min="1" max="10"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+                <div>
+                    <label for="ultimoSetAte" class="block mb-2 font-medium">Pontos no set decisivo:</label>
+                    <input type="number" id="ultimoSetAte" value="15" min="1" max="100"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipes e Cores -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Equipe A</h2>
+                <div class="mb-4">
+                    <label for="nomeEquipeA" class="block mb-2 font-medium">Nome:</label>
+                    <input type="text" id="nomeEquipeA" placeholder="Time A"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+                <div>
+                    <label for="corEquipeA" class="block mb-2 font-medium">Cor:</label>
+                    <input type="color" id="corEquipeA" value="#3B82F6"
+                        class="w-full h-10 rounded border-0 shadow-sm p-1">
+                </div>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 shadow-md">
+                <h2 class="text-xl font-semibold mb-4">Equipe B</h2>
+                <div class="mb-4">
+                    <label for="nomeEquipeB" class="block mb-2 font-medium">Nome:</label>
+                    <input type="text" id="nomeEquipeB" placeholder="Time B"
+                        class="w-full p-2 rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-base">
+                </div>
+                <div>
+                    <label for="corEquipeB" class="block mb-2 font-medium">Cor:</label>
+                    <input type="color" id="corEquipeB" value="#EF4444"
+                        class="w-full h-10 rounded border-0 shadow-sm p-1">
+                </div>
+            </div>
+        </div>
+
+        <button id="iniciarJogo"
+            class="w-full bg-primary hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 mb-8">
+            Iniciar Jogo
+        </button>
+
+        <!-- Área do Placar (inicialmente oculta) -->
+        <div id="areaDoJogo" class="hidden">
+            <!-- Placar Principal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+                <div id="placardoSetEquipeA"
+                    class="relative bg-gray-100 dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center shadow-lg border-t-8"
+                    style="border-color: #3B82F6">
+                    <h2 id="nomeTimeA" class="text-xl font-bold mb-2">Time A</h2>
+                    <div class="text-8xl md:text-9xl font-bold" id="pontosEquipeA">0</div>
+                    <div class="mt-4 flex gap-3">
+                        <button id="addPontoA"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg">+1</button>
+                        <button id="subPontoA"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg">-1</button>
+                    </div>
+                </div>
+                <div id="placardoSetEquipeB"
+                    class="relative bg-gray-100 dark:bg-gray-800 rounded-lg p-6 flex flex-col items-center shadow-lg border-t-8"
+                    style="border-color: #EF4444">
+                    <h2 id="nomeTimeB" class="text-xl font-bold mb-2">Time B</h2>
+                    <div class="text-8xl md:text-9xl font-bold" id="pontosEquipeB">0</div>
+                    <div class="mt-4 flex gap-3">
+                        <button id="addPontoB"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg">+1</button>
+                        <button id="subPontoB"
+                            class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-10 rounded-xl text-2xl shadow-lg">-1</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placar de Sets -->
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-center">Placar de Sets</h2>
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                        <h3 id="setsTimeA" class="text-2xl font-bold">0</h3>
+                        <p class="text-gray-600 dark:text-gray-400">Sets Time A</p>
+                    </div>
+                    <div>
+                        <h3 id="setsTimeB" class="text-2xl font-bold">0</h3>
+                        <p class="text-gray-600 dark:text-gray-400">Sets Time B</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico de Sets -->
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6 shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-center">Histórico de Sets</h2>
+                <div id="historicoSets" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- O histórico será preenchido dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Botões de Controle -->
+            <div class="flex flex-wrap gap-4 justify-center">
+                <button id="proximoSet"
+                    class="bg-primary hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
+                    Próximo Set
+                </button>
+                <button id="reiniciarJogo"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
+                    Reiniciar Jogo
+                </button>
+                <button id="voltarConfig"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
+                    Voltar às Configurações
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal de vencedor (inicialmente oculto) -->
+        <div id="modalVencedor"
+            class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl max-w-md w-full">
+                <h2 class="text-3xl font-bold text-center mb-4">Fim de Jogo!</h2>
+                <p id="textoVencedor" class="text-xl text-center mb-6">Time A venceu por 3-0!</p>
+                <div class="flex justify-center">
+                    <button id="fecharModal"
+                        class="bg-primary hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
+                        Fechar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Elementos DOM
+                const iniciarJogo = document.getElementById('iniciarJogo');
+                const areaDoJogo = document.getElementById('areaDoJogo');
+                const proximoSet = document.getElementById('proximoSet');
+                const reiniciarJogo = document.getElementById('reiniciarJogo');
+                const voltarConfig = document.getElementById('voltarConfig');
+                const modalVencedor = document.getElementById('modalVencedor');
+                const fecharModal = document.getElementById('fecharModal');
+
+                // Variáveis de estado
+                let setAtual = 1;
+                let jogando = false; // Inicialmente não está jogando
+                let historicoPartida = [];
+                let pontosConsecutivosA = 0;
+                let pontosConsecutivosB = 0;
+                let ultimoTimeAPontuar = null;
+
+                // Iniciar o jogo
+                iniciarJogo.addEventListener('click', () => {
+                    const nomeEquipeA = document.getElementById('nomeEquipeA').value || 'Time A';
+                    const nomeEquipeB = document.getElementById('nomeEquipeB').value || 'Time B';
+                    const corEquipeA = document.getElementById('corEquipeA').value;
+                    const corEquipeB = document.getElementById('corEquipeB').value;
+
+                    // Atualizar nomes das equipes no placar
+                    document.getElementById('nomeTimeA').textContent = nomeEquipeA;
+                    document.getElementById('nomeTimeB').textContent = nomeEquipeB;
+
+                    // Aplicar cores personalizadas
+                    document.getElementById('placardoSetEquipeA').style.borderColor = corEquipeA;
+                    document.getElementById('placardoSetEquipeB').style.borderColor = corEquipeB;
+
+                    // Esconder configurações e mostrar o placar
+                    areaDoJogo.classList.remove('hidden');
+                    document.querySelectorAll('.bg-gray-100.dark\\:bg-gray-800:not(#areaDoJogo div)').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    iniciarJogo.classList.add('hidden');
+
+                    // Inicializar variáveis do jogo
+                    reiniciarPlacar();
+                    jogando = true;
+                    setAtual = 1;
+                    historicoPartida = [];
+
+                    // Resetar contadores de pontos consecutivos
+                    pontosConsecutivosA = 0;
+                    pontosConsecutivosB = 0;
+                });
+
+                // Adicionar pontos
+                document.getElementById('addPontoA').addEventListener('click', () => adicionarPonto('A'));
+                document.getElementById('addPontoB').addEventListener('click', () => adicionarPonto('B'));
+
+                // Subtrair pontos
+                document.getElementById('subPontoA').addEventListener('click', () => subtrairPonto('A'));
+                document.getElementById('subPontoB').addEventListener('click', () => subtrairPonto('B'));
+
+                // Próximo set
+                proximoSet.addEventListener('click', iniciarNovoSet);
+
+                // Reiniciar jogo
+                reiniciarJogo.addEventListener('click', () => {
+                    reiniciarPlacar();
+                    limparHistorico();
+                    setAtual = 1;
+                    document.getElementById('setsTimeA').textContent = '0';
+                    document.getElementById('setsTimeB').textContent = '0';
+                    historicoPartida = [];
+                });
+
+                // Voltar às configurações
+                voltarConfig.addEventListener('click', () => {
+                    // Mostrar as configurações e esconder o placar
+                    areaDoJogo.classList.add('hidden');
+                    document.querySelectorAll('.bg-gray-100.dark\\:bg-gray-800:not(#areaDoJogo div)').forEach(el => {
+                        el.classList.remove('hidden');
+                    });
+                    iniciarJogo.classList.remove('hidden');
+
+                    // Resetar o jogo
+                    reiniciarPlacar();
+                    limparHistorico();
+                    document.getElementById('setsTimeA').textContent = '0';
+                    document.getElementById('setsTimeB').textContent = '0';
+                    jogando = false;
+                    setAtual = 1;
+                    historicoPartida = [];
+                    pontosConsecutivosA = 0;
+                    pontosConsecutivosB = 0;
+                    ultimoTimeAPontuar = null;
+                });
+
+                // Fechar modal
+                fecharModal.addEventListener('click', () => {
+                    modalVencedor.classList.add('hidden');
+                });
+
+                // Funções auxiliares
+                function adicionarPonto(equipe) {
+                    if (!jogando) return;
+
+                    const pontosParaVencer = obterPontosParaVencer();
+                    const pontosMinimosDiferenca = parseInt(document.getElementById('pontosMinimosDiferenca').value);
+
+                    const pontosA = parseInt(document.getElementById('pontosEquipeA').textContent);
+                    const pontosB = parseInt(document.getElementById('pontosEquipeB').textContent);
+
+                    // Atualizar contador de pontos consecutivos
+                    if (ultimoTimeAPontuar === equipe) {
+                        if (equipe === 'A') {
+                            pontosConsecutivosA++;
+                            pontosConsecutivosB = 0;
+                        } else {
+                            pontosConsecutivosB++;
+                            pontosConsecutivosA = 0;
+                        }
+                    } else {
+                        if (equipe === 'A') {
+                            pontosConsecutivosA = 1;
+                            pontosConsecutivosB = 0;
+                        } else {
+                            pontosConsecutivosB = 1;
+                            pontosConsecutivosA = 0;
+                        }
+                        ultimoTimeAPontuar = equipe;
+                    }
+
+                    if (equipe === 'A') {
+                        document.getElementById('pontosEquipeA').textContent = pontosA + 1;
+                    } else {
+                        document.getElementById('pontosEquipeB').textContent = pontosB + 1;
+                    }
+
+                    verificarFimDoSet();
+                }
+
+                function subtrairPonto(equipe) {
+                    if (!jogando) return;
+
+                    const el = equipe === 'A' ? 'pontosEquipeA' : 'pontosEquipeB';
+                    const pontos = parseInt(document.getElementById(el).textContent);
+
+                    if (pontos > 0) {
+                        document.getElementById(el).textContent = pontos - 1;
+                    }
+                }
+
+                function verificarFimDoSet() {
+                    const pontosParaVencer = obterPontosParaVencer();
+                    const pontosMinimosDiferenca = parseInt(document.getElementById('pontosMinimosDiferenca').value);
+                    const setsParaVencer = parseInt(document.getElementById('setsParaVencer').value);
+
+                    const pontosA = parseInt(document.getElementById('pontosEquipeA').textContent);
+                    const pontosB = parseInt(document.getElementById('pontosEquipeB').textContent);
+
+                    let setTerminou = false;
+                    let vencedor = null;
+
+                    // Caso 1: Vencer com a diferença mínima de pontos após atingir a pontuação necessária
+                    if ((pontosA >= pontosParaVencer && pontosA - pontosB >= pontosMinimosDiferenca) ||
+                        (pontosB >= pontosParaVencer && pontosB - pontosA >= pontosMinimosDiferenca)) {
+                        setTerminou = true;
+                        vencedor = pontosA > pontosB ? 'A' : 'B';
+                    }
+
+                    // Caso 2: Regra dos 3 pontos diretos 
+                    // Se a pontuação ultrapassou (pontosParaVencer + 2) e ainda está dentro da diferença mínima
+                    else if ((pontosA > pontosParaVencer + 2 || pontosB > pontosParaVencer + 2) &&
+                        Math.abs(pontosA - pontosB) < pontosMinimosDiferenca) {
+
+                        // Verificar se algum time marcou 3 pontos consecutivos
+                        if (pontosConsecutivosA >= 3) {
+                            setTerminou = true;
+                            vencedor = 'A';
+                        } else if (pontosConsecutivosB >= 3) {
+                            setTerminou = true;
+                            vencedor = 'B';
+                        }
+                    }
+
+                    // Se o set terminou, processar o resultado
+                    if (setTerminou) {
+                        // Adicionar ao histórico
+                        registrarSetNoHistorico(vencedor, pontosA, pontosB);
+
+                        // Atualizar placar de sets
+                        const setsA = parseInt(document.getElementById('setsTimeA').textContent);
+                        const setsB = parseInt(document.getElementById('setsTimeB').textContent);
+
+                        if (vencedor === 'A') {
+                            document.getElementById('setsTimeA').textContent = setsA + 1;
+                        } else {
+                            document.getElementById('setsTimeB').textContent = setsB + 1;
+                        }
+
+                        // Verificar fim do jogo
+                        const setsAtualizadosA = vencedor === 'A' ? setsA + 1 : setsA;
+                        const setsAtualizadosB = vencedor === 'B' ? setsB + 1 : setsB;
+
+                        if (setsAtualizadosA >= setsParaVencer || setsAtualizadosB >= setsParaVencer) {
+                            jogando = false;
+
+                            // Mostrar modal de vencedor
+                            const vencedorJogo = setsAtualizadosA > setsAtualizadosB ?
+                                document.getElementById('nomeTimeA').textContent :
+                                document.getElementById('nomeTimeB').textContent;
+
+                            document.getElementById('textoVencedor').textContent =
+                                `${vencedorJogo} venceu por ${setsAtualizadosA}-${setsAtualizadosB}!`;
+
+                            modalVencedor.classList.remove('hidden');
+                        } else {
+                            // Preparar próximo set
+                            proximoSet.focus();
+                            jogando = false;
+                        }
+
+                        // Resetar os contadores de pontos consecutivos
+                        pontosConsecutivosA = 0;
+                        pontosConsecutivosB = 0;
+                        ultimoTimeAPontuar = null;
+                    }
+                }
+
+                function obterPontosParaVencer() {
+                    const setsA = parseInt(document.getElementById('setsTimeA').textContent);
+                    const setsB = parseInt(document.getElementById('setsTimeB').textContent);
+                    const setsParaVencer = parseInt(document.getElementById('setsParaVencer').value);
+                    const ultimoSetAte = parseInt(document.getElementById('ultimoSetAte').value);
+
+                    // Verificar se é o set decisivo
+                    if (setsA === setsParaVencer - 1 || setsB === setsParaVencer - 1) {
+                        return ultimoSetAte;
+                    }
+
+                    return parseInt(document.getElementById('pontosParaVencer').value);
+                }
+
+                function iniciarNovoSet() {
+                    if (jogando) return;
+
+                    reiniciarPlacar();
+                    setAtual++;
+                    jogando = true;
+
+                    // Resetar contadores de pontos consecutivos para o novo set
+                    pontosConsecutivosA = 0;
+                    pontosConsecutivosB = 0;
+                    ultimoTimeAPontuar = null;
+                }
+
+                function reiniciarPlacar() {
+                    document.getElementById('pontosEquipeA').textContent = '0';
+                    document.getElementById('pontosEquipeB').textContent = '0';
+                }
+
+                function registrarSetNoHistorico(vencedor, pontosA, pontosB) {
+                    historicoPartida.push({
+                        set: setAtual,
+                        vencedor: vencedor,
+                        placar: `${pontosA}-${pontosB}`
+                    });
+
+                    atualizarHistoricoVisual();
+                }
+
+                function atualizarHistoricoVisual() {
+                    const historicoElement = document.getElementById('historicoSets');
+                    historicoElement.innerHTML = '';
+
+                    historicoPartida.forEach(set => {
+                        const nomeTimeA = document.getElementById('nomeTimeA').textContent;
+                        const nomeTimeB = document.getElementById('nomeTimeB').textContent;
+                        const nomeVencedor = set.vencedor === 'A' ? nomeTimeA : nomeTimeB;
+
+                        const setElement = document.createElement('div');
+                        setElement.className = 'bg-white dark:bg-gray-700 p-3 rounded shadow';
+                        setElement.innerHTML = `
+                            <div class="font-semibold">Set ${set.set}</div>
+                            <div>${set.placar}</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Vencedor: ${nomeVencedor}</div>
+                        `;
+
+                        historicoElement.appendChild(setElement);
+                    });
+                }
+
+                function limparHistorico() {
+                    document.getElementById('historicoSets').innerHTML = '';
+                }
+            });
+        </script>
+    </div>
+</body>
+
+</html>
