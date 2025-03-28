@@ -240,6 +240,8 @@
                     // Resetar contadores de pontos consecutivos
                     pontosConsecutivosA = 0;
                     pontosConsecutivosB = 0;
+
+                    proximoSet.classList.remove('hidden');
                 });
 
                 // Adicionar pontos
@@ -358,14 +360,14 @@
                     const setDecisivo = (setsA === setsNecessariosParaVencer - 1 && setsB === setsNecessariosParaVencer - 1);
                     const pontosParaSetDecisivo = setDecisivo ? ultimoSetAte : pontosParaVencer;
 
-                    // Caso 1: Vencer com a diferença mínima de pontos após atingir a pontuação necessária
-                    if ((pontosA >= pontosParaSetDecisivo && pontosA - pontosB >= pontosMinimosDiferenca) ||
-                        (pontosB >= pontosParaSetDecisivo && pontosB - pontosA >= pontosMinimosDiferenca)) {
+                    // Verifica se um time atingiu a pontuação necessária e tem a diferença mínima de pontos
+                    if ((pontosA >= pontosParaSetDecisivo || pontosB >= pontosParaSetDecisivo) &&
+                        Math.abs(pontosA - pontosB) >= pontosMinimosDiferenca) {
                         setTerminou = true;
                         vencedor = pontosA > pontosB ? 'A' : 'B';
                     }
 
-                    // Caso 2: Regra dos 3 pontos consecutivos após ultrapassar o limite
+                    // Caso 2: Regra dos 3 pontos consecutivos após ultrapassar o limite, se a diferença mínima ainda não foi alcançada
                     else if ((pontosA > pontosParaSetDecisivo + 2 || pontosB > pontosParaSetDecisivo + 2) &&
                         Math.abs(pontosA - pontosB) < pontosMinimosDiferenca) {
 
@@ -401,6 +403,7 @@
                                 `${vencedorJogo} venceu por ${setsAtualizadosA}-${setsAtualizadosB}!`;
 
                             modalVencedor.classList.remove('hidden');
+                            proximoSet.classList.add('hidden');
                         } else {
                             proximoSet.focus();
                             jogando = false;
