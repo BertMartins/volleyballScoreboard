@@ -165,12 +165,12 @@
                     Próximo Set
                 </button>
                 <button id="reiniciarJogo"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300 hidden">
                     Reiniciar Jogo
                 </button>
                 <button id="voltarConfig"
                     class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg shadow transition duration-300">
-                    Voltar às Configurações
+                    Novo Jogo
                 </button>
             </div>
         </div>
@@ -203,7 +203,7 @@
 
                 // Variáveis de estado
                 let setAtual = 1;
-                let jogando = false; // Inicialmente não está jogando
+                let jogando = false;
                 let historicoPartida = [];
                 let pontosConsecutivosA = 0;
                 let pontosConsecutivosB = 0;
@@ -344,6 +344,7 @@
                     const pontosParaVencer = obterPontosParaVencer();
                     const pontosMinimosDiferenca = parseInt(document.getElementById('pontosMinimosDiferenca').value);
                     const setsParaVencer = parseInt(document.getElementById('setsParaVencer').value);
+                    const ultimoSetAte = parseInt(document.getElementById('ultimoSetAte').value);
 
                     const pontosA = parseInt(document.getElementById('pontosEquipeA').textContent);
                     const pontosB = parseInt(document.getElementById('pontosEquipeB').textContent);
@@ -351,16 +352,21 @@
                     let setTerminou = false;
                     let vencedor = null;
 
+                    const setsA = parseInt(document.getElementById('setsTimeA').textContent);
+                    const setsB = parseInt(document.getElementById('setsTimeB').textContent);
+                    const setsNecessariosParaVencer = Math.ceil(setsParaVencer / 2);
+                    const setDecisivo = (setsA === setsNecessariosParaVencer - 1 && setsB === setsNecessariosParaVencer - 1);
+                    const pontosParaSetDecisivo = setDecisivo ? ultimoSetAte : pontosParaVencer;
+
                     // Caso 1: Vencer com a diferença mínima de pontos após atingir a pontuação necessária
-                    if ((pontosA >= pontosParaVencer && pontosA - pontosB >= pontosMinimosDiferenca) ||
-                        (pontosB >= pontosParaVencer && pontosB - pontosA >= pontosMinimosDiferenca)) {
+                    if ((pontosA >= pontosParaSetDecisivo && pontosA - pontosB >= pontosMinimosDiferenca) ||
+                        (pontosB >= pontosParaSetDecisivo && pontosB - pontosA >= pontosMinimosDiferenca)) {
                         setTerminou = true;
                         vencedor = pontosA > pontosB ? 'A' : 'B';
                     }
 
-                    // Caso 2: Regra dos 3 pontos diretos 
-                    // Se a pontuação ultrapassou (pontosParaVencer + 2) e ainda está dentro da diferença mínima
-                    else if ((pontosA > pontosParaVencer + 2 || pontosB > pontosParaVencer + 2) &&
+                    // Caso 2: Regra dos 3 pontos consecutivos após ultrapassar o limite
+                    else if ((pontosA > pontosParaSetDecisivo + 2 || pontosB > pontosParaSetDecisivo + 2) &&
                         Math.abs(pontosA - pontosB) < pontosMinimosDiferenca) {
 
                         // Verificar se algum time marcou 3 pontos consecutivos
@@ -373,14 +379,8 @@
                         }
                     }
 
-                    // Se o set terminou, processar o resultado
                     if (setTerminou) {
-                        // Adicionar ao histórico
                         registrarSetNoHistorico(vencedor, pontosA, pontosB);
-
-                        // Atualizar placar de sets
-                        const setsA = parseInt(document.getElementById('setsTimeA').textContent);
-                        const setsB = parseInt(document.getElementById('setsTimeB').textContent);
 
                         if (vencedor === 'A') {
                             document.getElementById('setsTimeA').textContent = setsA + 1;
@@ -388,14 +388,11 @@
                             document.getElementById('setsTimeB').textContent = setsB + 1;
                         }
 
-                        // Verificar fim do jogo
                         const setsAtualizadosA = vencedor === 'A' ? setsA + 1 : setsA;
                         const setsAtualizadosB = vencedor === 'B' ? setsB + 1 : setsB;
 
-                        if (setsAtualizadosA >= setsParaVencer || setsAtualizadosB >= setsParaVencer) {
+                        if (setsAtualizadosA >= setsNecessariosParaVencer || setsAtualizadosB >= setsNecessariosParaVencer) {
                             jogando = false;
-
-                            // Mostrar modal de vencedor
                             const vencedorJogo = setsAtualizadosA > setsAtualizadosB ?
                                 document.getElementById('nomeTimeA').textContent :
                                 document.getElementById('nomeTimeB').textContent;
@@ -405,15 +402,24 @@
 
                             modalVencedor.classList.remove('hidden');
                         } else {
-                            // Preparar próximo set
                             proximoSet.focus();
                             jogando = false;
                         }
 
-                        // Resetar os contadores de pontos consecutivos
-                        pontosConsecutivosA = 0;
-                        pontosConsecutivosB = 0;
-                        ultimoTimeAPontuar = null;
+                        // Atualizar contagem de pontos consecutivos
+                        if (ultimoTimeAPontuar === vencedor) {
+                            if (vencedor === 'A') {
+                                pontosConsecutivosA++;
+                                pontosConsecutivosB = 0;
+                            } else {
+                                pontosConsecutivosB++;
+                                pontosConsecutivosA = 0;
+                            }
+                        } else {
+                            pontosConsecutivosA = 1;
+                            pontosConsecutivosB = 1;
+                        }
+                        ultimoTimeAPontuar = vencedor;
                     }
                 }
 
